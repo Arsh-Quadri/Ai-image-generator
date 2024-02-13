@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { preview } from "../assets";
-import { getRandomPrompt } from "../utils";
+import { downloadImage, getRandomPrompt } from "../utils";
 import FormField from "../components/FormField";
 import Loader from "../components/Loader";
 
-const CreactePost = () => {
+const CreactePost = ({ darkMode }) => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     prompt: "",
     photo: "",
   });
+  const [downloadPhoto, setDownloadPhoto] = useState("");
   const [generatingImg, setGeneratingImg] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +28,12 @@ const CreactePost = () => {
           body: JSON.stringify({ prompt: form.prompt }),
         });
         const data = await response.json();
-        setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+        // setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+        // setForm({ ...form, photo: data.photo.generated_image });
+        // setForm({ ...form, photo: data.photo });
+        setForm({ ...form, photo: data.photo.secure_url });
+        setDownloadPhoto(data.photo.secure_url);
+        //add data to cloudinary and take response url
       } catch (error) {
         console.log(error);
       } finally {
@@ -51,7 +57,6 @@ const CreactePost = () => {
           },
           body: JSON.stringify(form),
         });
-
         await response.json();
         navigate("/");
       } catch (error) {
@@ -72,12 +77,17 @@ const CreactePost = () => {
     const randomPrompt = getRandomPrompt(form.prompt);
     setForm({ ...form, prompt: randomPrompt });
   };
-
   return (
-    <section className="max-w-7xl w-[70%] mx-auto">
+    <section className="max-w-7xl w-[70%] mx-[10vw] sm:mx-auto">
       <div className="">
-        <h1 className="font-extrabold text-[#222328]">Create</h1>
-        <p className="mt-2 text-[#666e75]">
+        <h1
+          className={`font-extrabold ${
+            darkMode ? "text-white" : "text-[#222328]"
+          }`}
+        >
+          Create
+        </h1>
+        <p className={`mt-2 ${darkMode ? "text-white" : "text-[#666e75]"} `}>
           Create imaginative and visually stunning images generated through
           DALL-E AI and share them with community
         </p>
@@ -91,6 +101,7 @@ const CreactePost = () => {
             placeholder="John doe"
             value={form.name}
             handleChange={handleChange}
+            darkMode={darkMode}
           />
           <FormField
             LableName="Prompt"
@@ -101,8 +112,15 @@ const CreactePost = () => {
             handleChange={handleChange}
             isSurpriseMe
             handleSurpriseMe={handleSurpriseMe}
+            darkMode={darkMode}
           />
-          <div className="relative  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64 p-3 h-64 flex justify-center items-center">
+          <div
+            className={`relative ${
+              darkMode
+                ? "text-white bg-[#1f1f1f]"
+                : "text-[#222328] bg-gray-50 border border-gray-300"
+            }  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-64 p-3 h-64 flex justify-center items-center`}
+          >
             {form.photo ? (
               <img
                 src={form.photo}
@@ -113,7 +131,9 @@ const CreactePost = () => {
               <img
                 src={preview}
                 alt="preview"
-                className="w-9/12 h-9/12 object-contain opacity-40"
+                className={`w-9/12 h-9/12 object-contain opacity-40 ${
+                  darkMode && "filter invert grayscale"
+                }`}
               />
             )}
             {generatingImg && (
@@ -123,7 +143,7 @@ const CreactePost = () => {
             )}
           </div>
         </div>
-        <div className="mt-5 flex gap-5">
+        <div className="mt-5 flex flex-col gap-5">
           <button
             type="button"
             onClick={generateImage}
@@ -131,9 +151,23 @@ const CreactePost = () => {
           >
             {generatingImg ? "Generating..." : "Generate"}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              // console.log(downloadPhoto + "download Url");
+              downloadImage(Date.now(), downloadPhoto);
+            }}
+            className="text-white bg-[#666e75] font-medium rounded-md text-sm w-auto sm:w-full px-5 py-2.5 text-center"
+          >
+            Download
+          </button>
         </div>
         <div className="mt-10">
-          <p className="mt-2 text-[#666e75] text-[14px] ">
+          <p
+            className={`mt-2 ${
+              darkMode ? "text-gray-400" : "text-[#666e75]"
+            } text-[14px] `}
+          >
             Once you have created the image you want, you can share it with
             others in cummunity
           </p>
